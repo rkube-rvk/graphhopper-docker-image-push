@@ -1,10 +1,8 @@
 FROM maven:3.6.3-jdk-8 as build
 
-RUN apt-get install -y wget
-
 WORKDIR /graphhopper
 
-COPY . .
+COPY graphhopper .
 
 RUN mvn clean install
 
@@ -18,13 +16,14 @@ WORKDIR /graphhopper
 
 COPY --from=build /graphhopper/web/target/graphhopper*.jar ./
 
-COPY ./config-example.yml ./
+COPY graphhopper.sh graphhopper/config-example.yml ./
 
-COPY ./graphhopper.sh ./
+# Enable connections from outside of the container
+RUN sed -i '/^ *bind_host/s/^ */&# /p' config-example.yml
 
 VOLUME [ "/data" ]
 
-EXPOSE 8989
+EXPOSE 8989 8990
 
 HEALTHCHECK --interval=5s --timeout=3s CMD curl --fail http://localhost:8989/health || exit 1
 
